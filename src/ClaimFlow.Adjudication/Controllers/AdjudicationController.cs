@@ -1,10 +1,13 @@
 using ClaimFlow.Adjudication.Contracts;
 using ClaimFlow.Adjudication.Services;
+using ClaimFlow.Security.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClaimFlow.Adjudication.Controllers;
 
 [ApiExplorerSettings(GroupName = "adjudication")]
+[Authorize(Policy = ClaimFlowPolicies.Adjudicate)]
 [ApiController]
 [Route("api/v1/adjudication")]
 public sealed class AdjudicationController : ControllerBase

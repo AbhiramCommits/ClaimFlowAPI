@@ -4,12 +4,14 @@ using System.Text.Json.Serialization;
 using ClaimFlow.Data;
 using ClaimFlow.Data.Entities;
 using ClaimFlow.Intake.Contracts;
-using ClaimFlow.Intake.Infrastructure;
 using ClaimFlow.Intake.Services;
+using ClaimFlow.Security.Auth;
+using ClaimFlow.Security.Logging;
 using ClaimFlow.Shared;
 using ClaimFlow.Shared.Dtos;
 using ClaimFlow.Shared.Messaging;
 using ClaimFlow.Shared.Validation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,6 +43,7 @@ public sealed class ClaimsController : ControllerBase
     private DateOnly Today => DateOnly.FromDateTime(_timeProvider.GetUtcNow().UtcDateTime);
 
     [HttpPost]
+    [Authorize(Policy = ClaimFlowPolicies.ClaimsWrite)]
     [ProducesResponseType(typeof(ClaimDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
@@ -59,6 +62,7 @@ public sealed class ClaimsController : ControllerBase
     }
 
     [HttpPost("batch")]
+    [Authorize(Policy = ClaimFlowPolicies.ClaimsWrite)]
     [RequestSizeLimit(60_000_000)]
     [Consumes("application/json", "application/x-ndjson", "text/plain")]
     [ProducesResponseType(typeof(BatchIngestResponse), StatusCodes.Status200OK)]
@@ -122,6 +126,7 @@ public sealed class ClaimsController : ControllerBase
     }
 
     [HttpGet("{claimId}")]
+    [Authorize(Policy = ClaimFlowPolicies.ClaimsRead)]
     [ProducesResponseType(typeof(ClaimDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(string claimId, CancellationToken cancellationToken)
@@ -136,6 +141,7 @@ public sealed class ClaimsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = ClaimFlowPolicies.ClaimsRead)]
     [ProducesResponseType(typeof(PagedResult<ClaimSummaryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
         [FromQuery] string? status,
@@ -197,6 +203,7 @@ public sealed class ClaimsController : ControllerBase
     }
 
     [HttpPut("{claimId}/status")]
+    [Authorize(Policy = ClaimFlowPolicies.Adjudicate)]
     [ProducesResponseType(typeof(ClaimDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

@@ -1,16 +1,21 @@
 using System.Text.Json;
 using ClaimFlow.Data;
 using ClaimFlow.Data.Entities;
-using ClaimFlow.Intake.Infrastructure;
-using ClaimFlow.Intake.Services;
 using ClaimFlow.Messaging;
+using ClaimFlow.Intake.Services;
+using ClaimFlow.Security.Auth;
+using ClaimFlow.Security.Logging;
 using ClaimFlow.Shared;
 using ClaimFlow.Shared.Messaging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) =>
+    configuration.ConfigureClaimFlow(context.Configuration, services, "intake"));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -21,6 +26,8 @@ builder.Services.AddControllers()
 
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddClaimFlowSecurity();
+builder.Services.AddClaimFlowLogging();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("claims", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -56,8 +63,12 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+app.UseClaimFlowCorrelationId();
+app.UseClaimFlowRequestLogging();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
@@ -75,13 +86,13 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("live"),
     ResponseWriter = WriteHealthResponse,
-});
+}).AllowAnonymous();
 
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready"),
     ResponseWriter = WriteHealthResponse,
-});
+}).AllowAnonymous();
 
 if (string.Equals(app.Configuration["Database:Provider"] ?? DatabaseProviderNames.SqlServer,
         DatabaseProviderNames.Sqlite, StringComparison.OrdinalIgnoreCase))

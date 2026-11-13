@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using ClaimFlow.Intake.Contracts;
+using ClaimFlow.Security.Auth;
 using FluentAssertions;
 using Xunit;
 
@@ -15,7 +16,7 @@ public sealed class PaginationTests : IClassFixture<IntakeApiFactory>
     [Fact]
     public async Task List_is_paged_and_filterable()
     {
-        var client = _factory.CreateClient();
+        var client = _factory.CreateAuthenticatedClient(ClaimFlowRoles.Admin);
         for (var i = 0; i < 5; i++)
         {
             var response = await client.PostAsJsonAsync("/api/claims", TestData.Bundle($"page{i}"), IntakeApiFactory.Json);
@@ -37,7 +38,7 @@ public sealed class PaginationTests : IClassFixture<IntakeApiFactory>
     [Fact]
     public async Task Invalid_status_filter_returns_problem_details()
     {
-        var client = _factory.CreateClient();
+        var client = _factory.CreateAuthenticatedClient(ClaimFlowRoles.Admin);
 
         var response = await client.GetAsync("/api/claims?status=NotAStatus");
 

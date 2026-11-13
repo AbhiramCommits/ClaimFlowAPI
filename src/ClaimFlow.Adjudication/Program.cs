@@ -2,12 +2,18 @@ using System.Text.Json;
 using ClaimFlow.Adjudication.Services;
 using ClaimFlow.Data;
 using ClaimFlow.Messaging;
+using ClaimFlow.Security.Auth;
+using ClaimFlow.Security.Logging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Polly;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) =>
+    configuration.ConfigureClaimFlow(context.Configuration, services, "adjudication"));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -18,6 +24,8 @@ builder.Services.AddControllers()
 
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddClaimFlowSecurity();
+builder.Services.AddClaimFlowLogging();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("adjudication", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -52,6 +60,7 @@ builder.Services
         client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
         client.Timeout = TimeSpan.FromSeconds(15);
     })
+    .AddHttpMessageHandler<ServiceAuthHandler>()
     .AddTransientHttpErrorPolicy(policy => policy.WaitAndRetryAsync(
         3,
         attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt))));
@@ -62,8 +71,12 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+app.UseClaimFlowCorrelationId();
+app.UseClaimFlowRequestLogging();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
@@ -80,13 +93,13 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("live"),
     ResponseWriter = WriteHealthResponse,
-});
+}).AllowAnonymous();
 
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready"),
     ResponseWriter = WriteHealthResponse,
-});
+}).AllowAnonymous();
 
 if (string.Equals(app.Configuration["Database:Provider"] ?? DatabaseProviderNames.SqlServer,
         DatabaseProviderNames.Sqlite, StringComparison.OrdinalIgnoreCase))

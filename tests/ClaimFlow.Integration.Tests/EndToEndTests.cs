@@ -49,6 +49,12 @@ public sealed class EndToEndTests : IClassFixture<EndToEndFixture>
         outbox.ProcessedAt.Should().NotBeNull();
 
         var payload = ClaimEventJson.Deserialize<ClaimSubmittedPayload>(outbox.Payload)!;
+        await EndToEndFixture.WaitUntilAsync(async () =>
+        {
+            using var waitScope = _fixture.Intake.Services.CreateScope();
+            var waitDb = waitScope.ServiceProvider.GetRequiredService<ClaimFlowDbContext>();
+            return await waitDb.ProcessedEvents.AsNoTracking().AnyAsync(e => e.EventId == payload.EventId);
+        }, TimeSpan.FromSeconds(10));
         var processedCount = await db.ProcessedEvents.AsNoTracking().CountAsync(e => e.EventId == payload.EventId);
         processedCount.Should().Be(1);
 

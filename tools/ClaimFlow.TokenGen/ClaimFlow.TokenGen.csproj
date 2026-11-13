@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ClaimFlow.TokenGen</RootNamespace>
+    <AssemblyName>ClaimFlow.TokenGen</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ClaimFlow.Security\ClaimFlow.Security.csproj" />
+  </ItemGroup>
+
+</Project>

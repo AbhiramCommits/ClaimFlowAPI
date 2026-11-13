@@ -1,6 +1,9 @@
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ClaimFlow.Data;
+using ClaimFlow.Security.Auth;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +15,8 @@ public class IntakeApiFactory : WebApplicationFactory<Program>
 {
     private readonly string _databasePath =
         Path.Combine(Path.GetTempPath(), $"claimflow-intake-{Guid.NewGuid():N}.db");
+
+    public string SigningKey { get; } = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
 
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
@@ -29,8 +34,29 @@ public class IntakeApiFactory : WebApplicationFactory<Program>
                 ["ConnectionStrings:ClaimFlow"] = $"Data Source={_databasePath};Pooling=False",
                 ["Logging:LogLevel:Default"] = "Warning",
                 ["Outbox:Enabled"] = "false",
+                ["Serilog:Console"] = "false",
+                ["Serilog:InMemory"] = "true",
+                ["Jwt:SigningKey"] = SigningKey,
+                ["Jwt:Issuer"] = "claimflow-tests",
+                ["Jwt:Audience"] = "claimflow-tests-api",
             });
         });
+    }
+
+    public HttpClient CreateAuthenticatedClient(string role = ClaimFlowRoles.Admin)
+    {
+        var client = CreateClient();
+        var token = JwtTokenFactory.CreateToken(
+            new JwtOptions
+            {
+                Issuer = "claimflow-tests",
+                Audience = "claimflow-tests-api",
+                SigningKey = SigningKey,
+            },
+            "test-user",
+            new[] { role });
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
     }
 
     public ClaimFlowDbContext CreateDbContext()

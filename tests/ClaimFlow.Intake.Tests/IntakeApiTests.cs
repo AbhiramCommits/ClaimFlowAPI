@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using ClaimFlow.Intake.Contracts;
+using ClaimFlow.Security.Auth;
 using ClaimFlow.Shared;
 using ClaimFlow.Shared.Dtos;
 using FluentAssertions;
@@ -19,7 +20,7 @@ public sealed class IntakeApiTests : IClassFixture<IntakeApiFactory>
     public IntakeApiTests(IntakeApiFactory factory)
     {
         _factory = factory;
-        _client = factory.CreateClient();
+        _client = factory.CreateAuthenticatedClient(ClaimFlowRoles.Admin);
     }
 
     [Fact]
