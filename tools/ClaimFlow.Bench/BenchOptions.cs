@@ -1,6 +1,3 @@
-using System.Text;
-using System.Text.Json;
-
 namespace ClaimFlow.Bench;
 
 public sealed record BenchOptions(
@@ -157,18 +154,6 @@ public sealed record BenchOptions(
         return null;
     }
 
-    public static void PrintJson(JsonElement value)
-    {
-        Console.WriteLine(JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true }));
-    }
-
-    public string ConnectionStringWithoutPassword()
-    {
-        var builder = new System.Data.Common.DbConnectionStringBuilder { ConnectionString = ConnectionString };
-        builder.Remove("Password");
-        return builder.ConnectionString;
-    }
-
     public string RedactedConnectionString()
     {
         var builder = new System.Data.Common.DbConnectionStringBuilder { ConnectionString = ConnectionString };
@@ -179,14 +164,4 @@ public sealed record BenchOptions(
 
         return builder.ConnectionString;
     }
-
-    public static string BuildLog(ProcessResult result)
-    {
-        var builder = new StringBuilder();
-        builder.AppendLine($"exit={result.ExitCode}");
-        builder.AppendLine(result.StdOut);
-        return builder.ToString();
-    }
 }
-
-public sealed record ProcessResult(int ExitCode, string StdOut);

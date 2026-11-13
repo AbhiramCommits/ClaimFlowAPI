@@ -64,13 +64,6 @@ public sealed record PagedResult<T>(
     long TotalCount,
     int TotalPages);
 
-public sealed record IngestResultDto(
-    string ClaimId,
-    ClaimStatus Status,
-    string Outcome,
-    IReadOnlyList<string> RuleCodes,
-    IReadOnlyList<ValidationIssue> Errors);
-
 public sealed record BatchIngestResponse(
     int Total,
     int Accepted,

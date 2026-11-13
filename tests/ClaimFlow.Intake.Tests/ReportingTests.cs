@@ -1,10 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using ClaimFlow.Intake.Contracts;
 using ClaimFlow.Intake.Reporting;
 using ClaimFlow.Security.Auth;
-using ClaimFlow.Shared;
 using ClaimFlow.Shared.Reporting;
 using FluentAssertions;
 using Xunit;

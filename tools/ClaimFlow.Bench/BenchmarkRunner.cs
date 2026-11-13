@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using ClaimFlow.Security.Auth;
@@ -188,25 +187,25 @@ public sealed class BenchmarkRunner
                             results.Add(new IngestRecord(201, Array.Empty<string>()));
                             break;
                         case 422:
-                        {
-                            Interlocked.Increment(ref rejected);
-                            var body = await response.Content.ReadAsStringAsync(token);
-                            var codes = ReadRuleCodes(body);
-                            results.Add(new IngestRecord(422, codes));
-                            break;
-                        }
+                            {
+                                Interlocked.Increment(ref rejected);
+                                var body = await response.Content.ReadAsStringAsync(token);
+                                var codes = ReadRuleCodes(body);
+                                results.Add(new IngestRecord(422, codes));
+                                break;
+                            }
                         case 409:
                             Interlocked.Increment(ref duplicates);
                             results.Add(new IngestRecord(409, new[] { "CO18" }));
                             break;
                         default:
-                        {
-                            Interlocked.Increment(ref errors);
-                            var body = await response.Content.ReadAsStringAsync(token);
-                            results.Add(new IngestRecord((int)response.StatusCode, Array.Empty<string>()));
-                            errorMessages.Enqueue($"{(int)response.StatusCode}: {body[..Math.Min(300, body.Length)]}");
-                            break;
-                        }
+                            {
+                                Interlocked.Increment(ref errors);
+                                var body = await response.Content.ReadAsStringAsync(token);
+                                results.Add(new IngestRecord((int)response.StatusCode, Array.Empty<string>()));
+                                errorMessages.Enqueue($"{(int)response.StatusCode}: {body[..Math.Min(300, body.Length)]}");
+                                break;
+                            }
                     }
                 }
                 catch (Exception ex)

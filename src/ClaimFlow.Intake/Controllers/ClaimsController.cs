@@ -9,7 +9,6 @@ using ClaimFlow.Security.Auth;
 using ClaimFlow.Security.Logging;
 using ClaimFlow.Shared;
 using ClaimFlow.Shared.Dtos;
-using ClaimFlow.Shared.Messaging;
 using ClaimFlow.Shared.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

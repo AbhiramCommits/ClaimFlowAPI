@@ -1,7 +1,7 @@
 using System.Text.Json;
 using ClaimFlow.Data;
-using ClaimFlow.Shared.Messaging;
 using ClaimFlow.Messaging;
+using ClaimFlow.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClaimFlow.Intake.Services;

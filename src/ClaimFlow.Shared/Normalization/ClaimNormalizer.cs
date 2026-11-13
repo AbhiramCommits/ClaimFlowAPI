@@ -15,7 +15,7 @@ public static class ClaimNormalizer
     {
         ArgumentNullException.ThrowIfNull(bundle);
 
-        var payer = PayerDirectory.GetRequired(bundle.PayerId);        var lines = (bundle.Claim.Lines ?? Array.Empty<ClaimLineItem>())
+        var payer = PayerDirectory.GetRequired(bundle.PayerId); var lines = (bundle.Claim.Lines ?? Array.Empty<ClaimLineItem>())
             .Select(line => new NormalizedClaimLine(
                 line.LineNumber,
                 Code(line.CptCode),

@@ -1,7 +1,5 @@
 using System.Globalization;
 using System.Text.Json;
-using ClaimFlow.Shared;
-using ClaimFlow.Shared.Dtos;
 using ClaimFlow.Shared.Validation;
 
 namespace ClaimFlow.DataGen;

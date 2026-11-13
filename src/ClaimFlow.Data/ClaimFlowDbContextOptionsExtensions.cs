@@ -24,6 +24,4 @@ public static class ClaimFlowDbContextOptionsExtensions
             });
     }
 
-    public static bool IsSqlite(this DbContext context) =>
-        context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
 }

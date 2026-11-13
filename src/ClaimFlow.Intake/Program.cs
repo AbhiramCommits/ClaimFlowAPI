@@ -1,13 +1,10 @@
 using System.Text.Json;
 using ClaimFlow.Data;
-using ClaimFlow.Data.Entities;
-using ClaimFlow.Messaging;
 using ClaimFlow.Intake.Reporting;
 using ClaimFlow.Intake.Services;
+using ClaimFlow.Messaging;
 using ClaimFlow.Security.Auth;
 using ClaimFlow.Security.Logging;
-using ClaimFlow.Shared;
-using ClaimFlow.Shared.Messaging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;

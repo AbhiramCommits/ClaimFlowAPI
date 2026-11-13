@@ -1,13 +1,12 @@
 using System.Collections.Concurrent;
 using ClaimFlow.Data;
 using ClaimFlow.Data.Entities;
-using ClaimFlow.Intake.Contracts;
 using ClaimFlow.Shared;
 using ClaimFlow.Shared.Domain;
+using ClaimFlow.Shared.Dtos;
 using ClaimFlow.Shared.Messaging;
 using ClaimFlow.Shared.Normalization;
 using ClaimFlow.Shared.Validation;
-using ClaimFlow.Shared.Dtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClaimFlow.Intake.Services;
@@ -278,7 +277,8 @@ public sealed class ClaimIngestService
         Patient patient,
         DateTimeOffset now,
         string correlationId)
-    {        var claim = new Claim
+    {
+        var claim = new Claim
         {
             ClaimId = Truncate(normalized.Claim.ClaimId, 64),
             PayerId = normalized.Claim.PayerId,

@@ -1,4 +1,3 @@
-using ClaimFlow.Shared;
 using ClaimFlow.Shared.Dtos;
 
 namespace ClaimFlow.Shared.Tests;

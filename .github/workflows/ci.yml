@@ -13,7 +13,6 @@ env:
   DOTNET_NOLOGO: "true"
   DOTNET_CLI_TELEMETRY_OPTOUT: "true"
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
-  CI_SQL_PASSWORD: "CiOnly!Passw0rd123"
 
 jobs:
   build-test:
@@ -24,18 +23,18 @@ jobs:
         image: mcr.microsoft.com/mssql/server:2022-latest
         env:
           ACCEPT_EULA: "Y"
-          MSSQL_SA_PASSWORD: "CiOnly!Passw0rd123"
+          MSSQL_SA_PASSWORD: "Ci${{ github.run_id }}!Passw0rd"
           MSSQL_PID: Developer
         ports:
           - 1433:1433
         options: >-
-          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CiOnly!Passw0rd123' -C -Q 'SELECT 1' -b"
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Ci${{ github.run_id }}!Passw0rd' -C -Q 'SELECT 1' -b"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 30
           --health-start-period 30s
     env:
-      CLAIMFLOW_SQLSERVER_CONNECTION: "Server=localhost,1433;Database=ClaimFlowCi;User Id=sa;Password=CiOnly!Passw0rd123;TrustServerCertificate=True;Encrypt=False"
+      CLAIMFLOW_SQLSERVER_CONNECTION: "Server=localhost,1433;Database=ClaimFlowCi;User Id=sa;Password=Ci${{ github.run_id }}!Passw0rd;TrustServerCertificate=True;Encrypt=False"
     steps:
       - uses: actions/checkout@v4
 
@@ -87,18 +86,18 @@ jobs:
         image: mcr.microsoft.com/mssql/server:2022-latest
         env:
           ACCEPT_EULA: "Y"
-          MSSQL_SA_PASSWORD: "CiOnly!Passw0rd123"
+          MSSQL_SA_PASSWORD: "Ci${{ github.run_id }}!Passw0rd"
           MSSQL_PID: Developer
         ports:
           - 1433:1433
         options: >-
-          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CiOnly!Passw0rd123' -C -Q 'SELECT 1' -b"
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Ci${{ github.run_id }}!Passw0rd' -C -Q 'SELECT 1' -b"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 30
           --health-start-period 30s
     env:
-      SQL_CONNECTION: "Server=localhost,1433;Database=ClaimFlowLint;User Id=sa;Password=CiOnly!Passw0rd123;TrustServerCertificate=True;Encrypt=False"
+      SQL_CONNECTION: "Server=localhost,1433;Database=ClaimFlowLint;User Id=sa;Password=Ci${{ github.run_id }}!Passw0rd;TrustServerCertificate=True;Encrypt=False"
     steps:
       - uses: actions/checkout@v4
 
@@ -136,6 +135,6 @@ jobs:
       - name: Validate compose file
         run: |
           cp .env.example .env
-          sed -i 's/__SET_A_STRONG_LOCAL_PASSWORD__/CiOnly!Passw0rd123/g' .env
+          sed -i 's/__SET_A_STRONG_LOCAL_PASSWORD__/Ci${{ github.run_id }}!Passw0rd/g' .env
           sed -i 's/__SET_AT_LEAST_32_CHARACTERS__/ci-only-signing-key-0123456789abcdef/g' .env
           docker compose config > /dev/null

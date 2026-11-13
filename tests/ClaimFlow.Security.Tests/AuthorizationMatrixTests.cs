@@ -104,12 +104,12 @@ public sealed class AuthorizationMatrixTests : IClassFixture<SecurityApiFixture>
                 return await client.PostAsJsonAsync(path,
                     SecurityTestData.Bundle($"mx{Guid.NewGuid():N}"[..10]), SecurityJson.Options);
             case "POST" when path == "/api/claims/batch":
-            {
-                var ndjson = System.Text.Json.JsonSerializer.Serialize(
-                    SecurityTestData.Bundle($"mb{Guid.NewGuid():N}"[..10]), SecurityJson.Options);
-                using var content = new StringContent(ndjson, Encoding.UTF8, "application/x-ndjson");
-                return await client.PostAsync(path, content);
-            }
+                {
+                    var ndjson = System.Text.Json.JsonSerializer.Serialize(
+                        SecurityTestData.Bundle($"mb{Guid.NewGuid():N}"[..10]), SecurityJson.Options);
+                    using var content = new StringContent(ndjson, Encoding.UTF8, "application/x-ndjson");
+                    return await client.PostAsync(path, content);
+                }
             case "POST" when path == "/api/v1/eligibility/check":
                 return await client.PostAsJsonAsync(path, new
                 {
