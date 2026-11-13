@@ -15,8 +15,7 @@ public static class ClaimNormalizer
     {
         ArgumentNullException.ThrowIfNull(bundle);
 
-        var payer = PayerDirectory.GetRequired(bundle.PayerId);
-        var lines = (bundle.Claim.Lines ?? Array.Empty<ClaimLineItem>())
+        var payer = PayerDirectory.GetRequired(bundle.PayerId);        var lines = (bundle.Claim.Lines ?? Array.Empty<ClaimLineItem>())
             .Select(line => new NormalizedClaimLine(
                 line.LineNumber,
                 Code(line.CptCode),
@@ -46,22 +45,7 @@ public static class ClaimNormalizer
             DiagnosisCodes: diagnosisCodes,
             CorrelationId: correlationId ?? string.Empty);
 
-        var digitsOnlySsn = new string((bundle.Patient.Ssn ?? string.Empty).Where(char.IsAsciiDigit).ToArray());
-        var ssnLast4 = digitsOnlySsn.Length >= 4 ? digitsOnlySsn[^4..] : digitsOnlySsn;
-        var ssnHash = HashSsn(digitsOnlySsn);
-
-        var patient = new NormalizedPatient(
-            MemberId: bundle.MemberId.Trim().ToUpperInvariant(),
-            GivenName: bundle.Patient.GivenName?.Trim() ?? string.Empty,
-            FamilyName: bundle.Patient.FamilyName?.Trim() ?? string.Empty,
-            DateOfBirth: bundle.Patient.DateOfBirth,
-            SsnLast4: ssnLast4,
-            SsnHash: ssnHash,
-            Address: new NormalizedAddress(
-                bundle.Patient.Address?.Line1?.Trim() ?? string.Empty,
-                bundle.Patient.Address?.City?.Trim() ?? string.Empty,
-                Code(bundle.Patient.Address?.State),
-                bundle.Patient.Address?.PostalCode?.Trim() ?? string.Empty));
+        var patient = NormalizePatient(bundle.Patient, bundle.MemberId);
 
         var normalizedPayer = new NormalizedPayer(payer.PayerId, payer.Name, payer.FilingLimitDays);
 
@@ -76,6 +60,26 @@ public static class ClaimNormalizer
             DeductibleRemainingCents: Math.Max(0, bundle.Coverage.DeductibleRemainingCents));
 
         return new NormalizationResult(claim, patient, normalizedPayer, coverage);
+    }
+
+    public static NormalizedPatient NormalizePatient(PatientResource patient, string memberId)
+    {
+        var digitsOnlySsn = new string((patient.Ssn ?? string.Empty).Where(char.IsAsciiDigit).ToArray());
+        var ssnLast4 = digitsOnlySsn.Length >= 4 ? digitsOnlySsn[^4..] : digitsOnlySsn;
+        var ssnHash = HashSsn(digitsOnlySsn);
+
+        return new NormalizedPatient(
+            MemberId: (memberId ?? string.Empty).Trim().ToUpperInvariant(),
+            GivenName: patient.GivenName?.Trim() ?? string.Empty,
+            FamilyName: patient.FamilyName?.Trim() ?? string.Empty,
+            DateOfBirth: patient.DateOfBirth,
+            SsnLast4: ssnLast4,
+            SsnHash: ssnHash,
+            Address: new NormalizedAddress(
+                patient.Address?.Line1?.Trim() ?? string.Empty,
+                patient.Address?.City?.Trim() ?? string.Empty,
+                Code(patient.Address?.State),
+                patient.Address?.PostalCode?.Trim() ?? string.Empty));
     }
 
     private static string Code(string? value) =>
