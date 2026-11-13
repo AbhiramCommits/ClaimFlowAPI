@@ -1,0 +1,148 @@
+name: Deploy
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  preflight:
+    name: Check Azure credentials presence
+    runs-on: ubuntu-latest
+    outputs:
+      has_azure: ${{ steps.check.outputs.has_azure }}
+    steps:
+      - name: Check secret without exposing it
+        id: check
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          if [ -n "$AZURE_CREDENTIALS" ]; then
+            echo "has_azure=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_azure=false" >> "$GITHUB_OUTPUT"
+            echo "AZURE_CREDENTIALS is not configured; the deploy job will be skipped."
+          fi
+
+  build-push:
+    name: Build and push images to GHCR
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image tag
+        id: meta
+        run: |
+          TAG=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+          if [ -z "$TAG" ]; then TAG="sha-${GITHUB_SHA::7}"; fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "repo=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push intake image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/ClaimFlow.Intake/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.repo }}/claimflow-intake:${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.repo }}/claimflow-intake:latest
+
+      - name: Push adjudication image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/ClaimFlow.Adjudication/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.repo }}/claimflow-adjudication:${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.repo }}/claimflow-adjudication:latest
+
+      - name: Push migrator image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: tools/ClaimFlow.Migrator/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.repo }}/claimflow-migrator:${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.repo }}/claimflow-migrator:latest
+
+  deploy:
+    name: Deploy to Azure Container Apps
+    runs-on: ubuntu-latest
+    needs: [preflight, build-push]
+    # A job-level if cannot read the secrets context; preflight surfaces whether
+    # AZURE_CREDENTIALS is configured so the deploy job no-ops without it.
+    if: ${{ needs.preflight.outputs.has_azure == 'true' }}
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Update revisions
+        env:
+          TAG: ${{ needs.build-push.outputs.image_tag }}
+          REPO_LC: ${{ github.repository }}
+          RG: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          INTAKE_APP: ${{ secrets.AZURE_INTAKE_APP }}
+          ADJ_APP: ${{ secrets.AZURE_ADJUDICATION_APP }}
+        run: |
+          set -euo pipefail
+          REPO=$(echo "$REPO_LC" | tr '[:upper:]' '[:lower:]')
+          SUFFIX="r${GITHUB_RUN_NUMBER}"
+          az containerapp update \
+            --name "$INTAKE_APP" --resource-group "$RG" \
+            --image "ghcr.io/${REPO}/claimflow-intake:${TAG}" \
+            --revision-suffix "$SUFFIX"
+          az containerapp update \
+            --name "$ADJ_APP" --resource-group "$RG" \
+            --image "ghcr.io/${REPO}/claimflow-adjudication:${TAG}" \
+            --revision-suffix "$SUFFIX"
+
+      - name: Readiness gate
+        env:
+          RG: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          INTAKE_APP: ${{ secrets.AZURE_INTAKE_APP }}
+          ADJ_APP: ${{ secrets.AZURE_ADJUDICATION_APP }}
+        run: |
+          set -euo pipefail
+          for APP in "$INTAKE_APP" "$ADJ_APP"; do
+            for attempt in $(seq 1 30); do
+              FQDN=$(az containerapp show --name "$APP" --resource-group "$RG" \
+                --query properties.configuration.ingress.fqdn -o tsv)
+              if [ -n "$FQDN" ] && curl -fsS "https://${FQDN}/health/ready"; then
+                echo " ${APP} is ready at https://${FQDN}"
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo " ${APP} did not become ready" >&2
+                exit 1
+              fi
+              sleep 10
+            done
+          done

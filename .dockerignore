@@ -1,0 +1,31 @@
+# Build output
+**/bin/
+**/obj/
+**/TestResults/
+**/coverage/
+**/artifacts/
+
+# Repository metadata / local state
+.git/
+.gitignore
+.github/
+.vscode/
+.idea/
+results/
+docs/
+README.md
+CONTRIBUTING.md
+LICENSE
+.env
+.env.*
+!/.env.example
+
+# Synthetic data and tests are not needed in runtime images
+data/
+tests/
+tools/ClaimFlow.Bench/
+tools/ClaimFlow.DataGen/
+tools/ClaimFlow.TokenGen/
+
+# OS noise
+.DS_Store
