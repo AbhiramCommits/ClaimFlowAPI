@@ -1,0 +1,23 @@
+-- 001_schema_notes.sql
+-- ClaimFlowAPI reporting schema notes (idempotent, no DDL).
+--
+-- Expected EF Core schema (src/ClaimFlow.Data/Migrations/InitialCreate):
+--   Claims(Id uniqueidentifier PK, ClaimId nvarchar(64), PayerId nvarchar(32),
+--          MemberId nvarchar(64), ServiceDate date, TotalChargeCents int,
+--          Status nvarchar(24), Outcome nvarchar(24), DenialReasonCode nvarchar(16),
+--          AllowedCents int, PaidCents int, PatientResponsibilityCents int,
+--          ValidationRuleCodes nvarchar(256), ReceivedAt datetimeoffset,
+--          AdjudicatedAt datetimeoffset NULL)
+--   ClaimLines(ClaimId FK -> Claims.Id), Patients, Payers(PayerId PK),
+--   ClaimStatusHistory, OutboxMessages, ProcessedEvents.
+--
+-- Money is stored as integer cents everywhere; reports expose cents and the
+-- presentation layer divides by 100. No float/decimal money is persisted.
+--
+-- Reporting objects are applied in numeric order by scripts/apply-db-scripts.sh:
+--   010_views.sql -> 020_procs.sql -> 030_indexes.sql
+--
+-- All scripts are idempotent (CREATE OR ALTER / IF NOT EXISTS), so re-running the
+-- migrator is safe and CI can lint the scripts against a disposable database.
+SET NOCOUNT ON;
+GO

@@ -2,6 +2,7 @@ using System.Text.Json;
 using ClaimFlow.Data;
 using ClaimFlow.Data.Entities;
 using ClaimFlow.Messaging;
+using ClaimFlow.Intake.Reporting;
 using ClaimFlow.Intake.Services;
 using ClaimFlow.Security.Auth;
 using ClaimFlow.Security.Logging;
@@ -53,6 +54,16 @@ builder.Services.AddDbContext<ClaimFlowDbContext>((serviceProvider, options) =>
     options.UseClaimFlowDatabase(resolvedProvider, resolvedConnection);
 });
 builder.Services.AddScoped<ClaimIngestService>();
+builder.Services.AddScoped<SqlServerReportingQuery>();
+builder.Services.AddScoped<SqliteReportingQuery>();
+builder.Services.AddScoped<IReportingQuery>(serviceProvider =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    return string.Equals(configuration["Database:Provider"] ?? DatabaseProviderNames.SqlServer,
+        DatabaseProviderNames.Sqlite, StringComparison.OrdinalIgnoreCase)
+        ? serviceProvider.GetRequiredService<SqliteReportingQuery>()
+        : serviceProvider.GetRequiredService<SqlServerReportingQuery>();
+});
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddClaimEventBus();
 builder.Services.AddHostedService<OutboxPublisher>();

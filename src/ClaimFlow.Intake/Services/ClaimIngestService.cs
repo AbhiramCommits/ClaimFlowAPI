@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using ClaimFlow.Data;
 using ClaimFlow.Data.Entities;
 using ClaimFlow.Intake.Contracts;
@@ -29,6 +30,9 @@ public sealed record IngestOutcome(
 /// </summary>
 public sealed class ClaimIngestService
 {
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> MemberGates =
+        new(StringComparer.Ordinal);
+
     private readonly ClaimFlowDbContext _db;
     private readonly ILogger<ClaimIngestService> _logger;
 
@@ -47,96 +51,124 @@ public sealed class ClaimIngestService
         var validation = ClaimValidator.Validate(bundle, today);
         if (!validation.IsValid)
         {
-            var rejected = await PersistRejectedAsync(bundle, validation, correlationId, today, cancellationToken);
-            _logger.LogWarning(
-                "Claim rejected by validation. ClaimId={ClaimId} RuleCodes={RuleCodes}",
-                rejected.ClaimId,
-                rejected.ValidationRuleCodes);
-            return new IngestOutcome(IngestKind.Rejected, rejected, validation.Errors);
+            var memberKey = (bundle.MemberId ?? string.Empty).Trim().ToUpperInvariant();
+            var gate = memberKey.Length > 0 ? GetMemberGate(memberKey) : null;
+            if (gate is not null)
+            {
+                await gate.WaitAsync(cancellationToken);
+            }
+
+            try
+            {
+                var rejected = await PersistRejectedAsync(bundle, validation, correlationId, today, cancellationToken);
+                _logger.LogWarning(
+                    "Claim rejected by validation. ClaimId={ClaimId} RuleCodes={RuleCodes}",
+                    rejected.ClaimId,
+                    rejected.ValidationRuleCodes);
+                return new IngestOutcome(IngestKind.Rejected, rejected, validation.Errors);
+            }
+            finally
+            {
+                gate?.Release();
+            }
         }
 
-        var normalized = ClaimNormalizer.Normalize(bundle, correlationId);        var naturalKeyExists = await _db.Claims.AnyAsync(
-            c => c.PayerId == normalized.Claim.PayerId &&
-                 c.MemberId == normalized.Claim.MemberId &&
-                 c.ServiceDate == normalized.Claim.ServiceDate &&
-                 c.TotalChargeCents == normalized.Claim.TotalChargeCents &&
-                 c.Status != ClaimStatus.Rejected,
-            cancellationToken);
+        var normalized = ClaimNormalizer.Normalize(bundle, correlationId);
 
-        if (naturalKeyExists)
-        {
-            _logger.LogWarning("Duplicate claim detected. ClaimId={ClaimId}", normalized.Claim.ClaimId);
-            return new IngestOutcome(IngestKind.Duplicate, null, Array.Empty<ValidationIssue>());
-        }
-
-        var patient = await UpsertPatientAsync(normalized.Patient, cancellationToken);
-        var now = DateTimeOffset.UtcNow;
-        var claim = BuildClaim(normalized, patient, now, correlationId);
-        _db.Claims.Add(claim);
-
-        claim.StatusHistory.Add(new ClaimStatusHistory
-        {
-            ClaimId = claim.Id,
-            Status = ClaimStatus.Received,
-            Sequence = 1,
-            ChangedAt = now,
-            Reason = "Claim received from provider",
-            Actor = "intake",
-            CorrelationId = correlationId,
-        });
-
-        claim.StatusHistory.Add(new ClaimStatusHistory
-        {
-            ClaimId = claim.Id,
-            Status = ClaimStatus.Validated,
-            Sequence = 2,
-            ChangedAt = now,
-            Reason = "Validation and normalization passed",
-            Actor = "intake",
-            CorrelationId = correlationId,
-        });
-
-        claim.Status = ClaimStatus.Validated;
-
-        var payload = new ClaimSubmittedPayload(
-            EventId: Guid.NewGuid(),
-            ClaimId: claim.ClaimId,
-            PayerId: claim.PayerId,
-            MemberId: claim.MemberId,
-            ProviderNpi: claim.ProviderNpi,
-            PlaceOfService: claim.PlaceOfService,
-            ServiceDate: claim.ServiceDate,
-            TotalChargeCents: claim.TotalChargeCents,
-            Lines: normalized.Claim.Lines.Select(l => new ClaimLinePayload(
-                l.LineNumber, l.CptCode, l.Icd10Code, l.PlaceOfService, l.ChargeCents, l.Units)).ToArray(),
-            CorrelationId: correlationId,
-            OccurredAt: now);
-
-        _db.OutboxMessages.Add(new OutboxMessage
-        {
-            EventType = ClaimEventTypes.ClaimSubmitted,
-            Payload = ClaimEventJson.Serialize(payload),
-            CorrelationId = correlationId,
-            OccurredAt = now,
-        });
-
+        // A member may appear on several claims ingested concurrently. Serialize the
+        // duplicate check + patient upsert per member so two requests cannot race to insert
+        // the same unique patient row (the natural-key index still protects claim duplicates).
+        var memberGate = GetMemberGate(normalized.Claim.MemberId);
+        await memberGate.WaitAsync(cancellationToken);
         try
         {
-            await _db.SaveChangesAsync(cancellationToken);
+            var naturalKeyExists = await _db.Claims.AnyAsync(
+                c => c.PayerId == normalized.Claim.PayerId &&
+                     c.MemberId == normalized.Claim.MemberId &&
+                     c.ServiceDate == normalized.Claim.ServiceDate &&
+                     c.TotalChargeCents == normalized.Claim.TotalChargeCents &&
+                     c.Status != ClaimStatus.Rejected,
+                cancellationToken);
+
+            if (naturalKeyExists)
+            {
+                _logger.LogWarning("Duplicate claim detected. ClaimId={ClaimId}", normalized.Claim.ClaimId);
+                return new IngestOutcome(IngestKind.Duplicate, null, Array.Empty<ValidationIssue>());
+            }
+
+            var patient = await UpsertPatientAsync(normalized.Patient, cancellationToken);
+            var now = DateTimeOffset.UtcNow;
+            var claim = BuildClaim(normalized, patient, now, correlationId);
+            _db.Claims.Add(claim);
+
+            claim.StatusHistory.Add(new ClaimStatusHistory
+            {
+                ClaimId = claim.Id,
+                Status = ClaimStatus.Received,
+                Sequence = 1,
+                ChangedAt = now,
+                Reason = "Claim received from provider",
+                Actor = "intake",
+                CorrelationId = correlationId,
+            });
+
+            claim.StatusHistory.Add(new ClaimStatusHistory
+            {
+                ClaimId = claim.Id,
+                Status = ClaimStatus.Validated,
+                Sequence = 2,
+                ChangedAt = now,
+                Reason = "Validation and normalization passed",
+                Actor = "intake",
+                CorrelationId = correlationId,
+            });
+
+            claim.Status = ClaimStatus.Validated;
+
+            var payload = new ClaimSubmittedPayload(
+                EventId: Guid.NewGuid(),
+                ClaimId: claim.ClaimId,
+                PayerId: claim.PayerId,
+                MemberId: claim.MemberId,
+                ProviderNpi: claim.ProviderNpi,
+                PlaceOfService: claim.PlaceOfService,
+                ServiceDate: claim.ServiceDate,
+                TotalChargeCents: claim.TotalChargeCents,
+                Lines: normalized.Claim.Lines.Select(l => new ClaimLinePayload(
+                    l.LineNumber, l.CptCode, l.Icd10Code, l.PlaceOfService, l.ChargeCents, l.Units)).ToArray(),
+                CorrelationId: correlationId,
+                OccurredAt: now);
+
+            _db.OutboxMessages.Add(new OutboxMessage
+            {
+                EventType = ClaimEventTypes.ClaimSubmitted,
+                Payload = ClaimEventJson.Serialize(payload),
+                CorrelationId = correlationId,
+                OccurredAt = now,
+            });
+
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (IsNaturalKeyConflict(ex))
+            {
+                _logger.LogWarning(ex, "Claim insert conflicted with an existing claim. ClaimId={ClaimId}", claim.ClaimId);
+                return new IngestOutcome(IngestKind.Duplicate, null, Array.Empty<ValidationIssue>());
+            }
+
+            _logger.LogInformation(
+                "Claim accepted. ClaimId={ClaimId} Payer={PayerId} ChargeCents={ChargeCents}",
+                claim.ClaimId,
+                claim.PayerId,
+                claim.TotalChargeCents);
+
+            return new IngestOutcome(IngestKind.Accepted, claim, Array.Empty<ValidationIssue>());
         }
-        catch (DbUpdateException ex)
+        finally
         {
-            _logger.LogWarning(ex, "Claim insert conflicted with an existing claim. ClaimId={ClaimId}", claim.ClaimId);
-            return new IngestOutcome(IngestKind.Duplicate, null, Array.Empty<ValidationIssue>());
+            memberGate.Release();
         }
-
-        _logger.LogInformation(
-            "Claim accepted. ClaimId={ClaimId} Payer={PayerId} ChargeCents={ChargeCents}",
-            claim.ClaimId,
-            claim.PayerId,
-            claim.TotalChargeCents);
-
-        return new IngestOutcome(IngestKind.Accepted, claim, Array.Empty<ValidationIssue>());
     }
 
     private async Task<Claim> PersistRejectedAsync(
@@ -278,6 +310,16 @@ public sealed class ClaimIngestService
         }
 
         return claim;
+    }
+
+    private static SemaphoreSlim GetMemberGate(string memberId) =>
+        MemberGates.GetOrAdd(memberId, _ => new SemaphoreSlim(1, 1));
+
+    private static bool IsNaturalKeyConflict(DbUpdateException exception)
+    {
+        var message = exception.InnerException?.Message ?? exception.Message;
+        return message.Contains("UX_Claims_NaturalKey", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("UNIQUE constraint failed: Claims.", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Truncate(string value, int maxLength) =>

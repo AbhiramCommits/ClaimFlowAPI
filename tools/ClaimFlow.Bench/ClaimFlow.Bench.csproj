@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ClaimFlow.Bench</RootNamespace>
+    <AssemblyName>ClaimFlow.Bench</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ClaimFlow.Data\ClaimFlow.Data.csproj" />
+    <ProjectReference Include="..\..\src\ClaimFlow.Messaging\ClaimFlow.Messaging.csproj" />
+    <ProjectReference Include="..\..\src\ClaimFlow.Security\ClaimFlow.Security.csproj" />
+    <ProjectReference Include="..\..\src\ClaimFlow.Shared\ClaimFlow.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

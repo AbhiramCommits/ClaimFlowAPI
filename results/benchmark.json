@@ -1,0 +1,323 @@
+{
+  "generatedAtUtc": "2026-11-13T08:46:06.4601750Z",
+  "databaseBackend": "SQL Server 2022 (mcr.microsoft.com/mssql/server:2022-latest, linux/amd64 container)",
+  "messagingBackend": "RabbitMQ 3.13 (rabbitmq:3-management container)",
+  "dataset": "data/claims.ndjson",
+  "requestedClaims": 5000,
+  "concurrency": 16,
+  "ingest": {
+    "total": 5000,
+    "accepted": 4252,
+    "rejected": 748,
+    "duplicates": 0,
+    "unexpectedErrors": 0,
+    "cleanClaimRatePercent": 85.04,
+    "elapsedSeconds": 62.16,
+    "claimsPerSecond": 80.44,
+    "requestP50Ms": 128.97,
+    "requestP95Ms": 615.64,
+    "requestP99Ms": 1194.47
+  },
+  "rejectsByRule": [
+    {
+      "ruleCode": "CPT001",
+      "description": "Procedure code is not a valid CPT/HCPCS code",
+      "claimCount": 79,
+      "percentOfSubmissions": 1.58
+    },
+    {
+      "ruleCode": "PAY001",
+      "description": "Payer is not in the contracted payer directory",
+      "claimCount": 79,
+      "percentOfSubmissions": 1.58
+    },
+    {
+      "ruleCode": "DUP001",
+      "description": "Duplicate service line on the same claim",
+      "claimCount": 78,
+      "percentOfSubmissions": 1.56
+    },
+    {
+      "ruleCode": "MBR001",
+      "description": "Member identifier is missing",
+      "claimCount": 72,
+      "percentOfSubmissions": 1.44
+    },
+    {
+      "ruleCode": "CHG001",
+      "description": "Line or claim charge is zero or negative",
+      "claimCount": 70,
+      "percentOfSubmissions": 1.4
+    },
+    {
+      "ruleCode": "POS001",
+      "description": "Place of service is missing or invalid",
+      "claimCount": 68,
+      "percentOfSubmissions": 1.36
+    },
+    {
+      "ruleCode": "SVC001",
+      "description": "Service date is in the future",
+      "claimCount": 64,
+      "percentOfSubmissions": 1.28
+    },
+    {
+      "ruleCode": "SVC002",
+      "description": "Service date is older than the payer filing limit",
+      "claimCount": 64,
+      "percentOfSubmissions": 1.28
+    },
+    {
+      "ruleCode": "NPI001",
+      "description": "Provider NPI failed format or Luhn checksum validation",
+      "claimCount": 61,
+      "percentOfSubmissions": 1.22
+    },
+    {
+      "ruleCode": "ICD001",
+      "description": "Diagnosis code is not a valid ICD-10-CM code",
+      "claimCount": 57,
+      "percentOfSubmissions": 1.14
+    },
+    {
+      "ruleCode": "CHG002",
+      "description": "Line charges do not sum to the claim total",
+      "claimCount": 56,
+      "percentOfSubmissions": 1.12
+    }
+  ],
+  "adjudicationOutcomes": [
+    {
+      "outcome": "PartiallyPaid",
+      "count": 2714,
+      "percent": 63.83
+    },
+    {
+      "outcome": "Denied",
+      "count": 886,
+      "percent": 20.84
+    },
+    {
+      "outcome": "Paid",
+      "count": 652,
+      "percent": 15.33
+    }
+  ],
+  "topDenialReasons": [
+    {
+      "denialCode": "PR1",
+      "description": "Deductible amount",
+      "claimCount": 657,
+      "chargeCents": 91408548,
+      "percentOfDenials": 28.65,
+      "rank": 1
+    },
+    {
+      "denialCode": "PR204",
+      "description": "Service not covered under the current benefit plan",
+      "claimCount": 570,
+      "chargeCents": 101882879,
+      "percentOfDenials": 24.86,
+      "rank": 2
+    },
+    {
+      "denialCode": "CO50",
+      "description": "Non-covered because not deemed a medical necessity",
+      "claimCount": 556,
+      "chargeCents": 105948620,
+      "percentOfDenials": 24.25,
+      "rank": 3
+    },
+    {
+      "denialCode": "CO27",
+      "description": "Expenses incurred after coverage terminated",
+      "claimCount": 330,
+      "chargeCents": 50609687,
+      "percentOfDenials": 14.39,
+      "rank": 4
+    },
+    {
+      "denialCode": "CO97",
+      "description": "Benefit included in another service (bundled)",
+      "claimCount": 180,
+      "chargeCents": 36919899,
+      "percentOfDenials": 7.85,
+      "rank": 5
+    }
+  ],
+  "daysInAr": {
+    "asOfDate": "2026-11-13",
+    "openClaimCount": 2672,
+    "openArCents": 92499431,
+    "averageDaysInAr": 85.37,
+    "medianDaysInAr": 85,
+    "buckets": [
+      {
+        "label": "0-30",
+        "claimCount": 502,
+        "amountCents": 18232578
+      },
+      {
+        "label": "31-60",
+        "claimCount": 456,
+        "amountCents": 15481119
+      },
+      {
+        "label": "61-90",
+        "claimCount": 467,
+        "amountCents": 15349508
+      },
+      {
+        "label": "90\u002B",
+        "claimCount": 1247,
+        "amountCents": 43436226
+      }
+    ]
+  },
+  "daysInArByPayer": [
+    {
+      "payerId": "PAYER-MEDICARE",
+      "payerName": "Medicare",
+      "openClaimCount": 553,
+      "openArCents": 21806219,
+      "averageDaysInAr": 82.89,
+      "medianDaysInAr": 83.00,
+      "bucket0To30Claims": 106,
+      "bucket0To30Cents": 4239203,
+      "bucket31To60Claims": 103,
+      "bucket31To60Cents": 4176278,
+      "bucket61To90Claims": 88,
+      "bucket61To90Cents": 3567655,
+      "bucket90PlusClaims": 256,
+      "bucket90PlusCents": 9823083
+    },
+    {
+      "payerId": "PAYER-CIGNA",
+      "payerName": "Cigna",
+      "openClaimCount": 560,
+      "openArCents": 20590543,
+      "averageDaysInAr": 86.98,
+      "medianDaysInAr": 88.50,
+      "bucket0To30Claims": 111,
+      "bucket0To30Cents": 4363356,
+      "bucket31To60Claims": 90,
+      "bucket31To60Cents": 3214938,
+      "bucket61To90Claims": 86,
+      "bucket61To90Cents": 3231592,
+      "bucket90PlusClaims": 273,
+      "bucket90PlusCents": 9780657
+    },
+    {
+      "payerId": "PAYER-HUMANA",
+      "payerName": "Humana",
+      "openClaimCount": 572,
+      "openArCents": 16430711,
+      "averageDaysInAr": 86.68,
+      "medianDaysInAr": 86.00,
+      "bucket0To30Claims": 98,
+      "bucket0To30Cents": 2857519,
+      "bucket31To60Claims": 95,
+      "bucket31To60Cents": 2508745,
+      "bucket61To90Claims": 107,
+      "bucket61To90Cents": 2739347,
+      "bucket90PlusClaims": 272,
+      "bucket90PlusCents": 8325100
+    },
+    {
+      "payerId": "PAYER-AETNA",
+      "payerName": "Aetna",
+      "openClaimCount": 576,
+      "openArCents": 15662527,
+      "averageDaysInAr": 83.08,
+      "medianDaysInAr": 81.50,
+      "bucket0To30Claims": 111,
+      "bucket0To30Cents": 3545479,
+      "bucket31To60Claims": 103,
+      "bucket31To60Cents": 2638918,
+      "bucket61To90Claims": 111,
+      "bucket61To90Cents": 2988881,
+      "bucket90PlusClaims": 251,
+      "bucket90PlusCents": 6489249
+    },
+    {
+      "payerId": "PAYER-UHC",
+      "payerName": "UnitedHealthcare",
+      "openClaimCount": 211,
+      "openArCents": 9985313,
+      "averageDaysInAr": 87.11,
+      "medianDaysInAr": 86.00,
+      "bucket0To30Claims": 37,
+      "bucket0To30Cents": 1756290,
+      "bucket31To60Claims": 32,
+      "bucket31To60Cents": 1558384,
+      "bucket61To90Claims": 42,
+      "bucket61To90Cents": 1793005,
+      "bucket90PlusClaims": 100,
+      "bucket90PlusCents": 4877634
+    },
+    {
+      "payerId": "PAYER-BCBS",
+      "payerName": "Blue Cross Blue Shield",
+      "openClaimCount": 200,
+      "openArCents": 8024118,
+      "averageDaysInAr": 88.73,
+      "medianDaysInAr": 88.00,
+      "bucket0To30Claims": 39,
+      "bucket0To30Cents": 1470731,
+      "bucket31To60Claims": 33,
+      "bucket31To60Cents": 1383856,
+      "bucket61To90Claims": 33,
+      "bucket61To90Cents": 1029028,
+      "bucket90PlusClaims": 95,
+      "bucket90PlusCents": 4140503
+    }
+  ],
+  "endToEndLatencyMs": {
+    "sampleCount": 4252,
+    "average": 46403.5,
+    "p50": 44720,
+    "p95": 93682,
+    "p99": 108179,
+    "max": 121668
+  },
+  "reportCalls": [
+    {
+      "name": "denials",
+      "httpStatus": 200,
+      "elapsedMs": 83.33,
+      "rowCount": 5
+    },
+    {
+      "name": "days-in-ar",
+      "httpStatus": 200,
+      "elapsedMs": 118.52,
+      "rowCount": 6
+    },
+    {
+      "name": "rejects",
+      "httpStatus": 200,
+      "elapsedMs": 27.6,
+      "rowCount": 11
+    },
+    {
+      "name": "throughput",
+      "httpStatus": 200,
+      "elapsedMs": 64.83,
+      "rowCount": 1
+    }
+  ],
+  "rollupQuery": {
+    "iterations": 5,
+    "medianWithoutIndexMs": 44.699,
+    "medianWithIndexMs": 39.119,
+    "improvementPercent": 12.48,
+    "rowsReturned": 5
+  },
+  "throughputByHour": [
+    {
+      "hourStartUtc": "2026-11-13T08:00:00",
+      "ingestedCount": 5000,
+      "adjudicatedCount": 4252
+    }
+  ]
+}

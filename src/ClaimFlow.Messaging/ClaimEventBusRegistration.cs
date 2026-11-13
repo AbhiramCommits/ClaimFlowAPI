@@ -35,7 +35,8 @@ public static class ClaimEventBusRegistration
                 QueueName: configuration["RabbitMq:QueueName"] ?? "claimflow.adjudication",
                 DeadLetterQueueName: configuration["RabbitMq:DeadLetterQueueName"] ?? "claimflow.dead-letter",
                 MaxRetries: configuration.GetValue("RabbitMq:MaxRetries", 3),
-                RetryBaseDelayMilliseconds: configuration.GetValue("RabbitMq:RetryBaseDelayMs", 500));
+                RetryBaseDelayMilliseconds: configuration.GetValue("RabbitMq:RetryBaseDelayMs", 500),
+                ConsumerConcurrency: configuration.GetValue("RabbitMq:ConsumerConcurrency", 4));
             return new RabbitMqEventBus(options, loggerFactory.CreateLogger<RabbitMqEventBus>());
         });
 

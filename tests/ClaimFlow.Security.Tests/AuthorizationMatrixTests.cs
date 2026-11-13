@@ -26,6 +26,10 @@ public sealed class AuthorizationMatrixTests : IClassFixture<SecurityApiFixture>
         "intake:GET /api/claims/{id}",
         "intake:GET /api/claims",
         "intake:PUT /api/claims/{id}/status",
+        "intake:GET /api/v1/reports/denials",
+        "intake:GET /api/v1/reports/days-in-ar",
+        "intake:GET /api/v1/reports/rejects",
+        "intake:GET /api/v1/reports/throughput",
         "intake:GET /health/live",
         "intake:GET /health/ready",
         "adjudication:POST /api/v1/eligibility/check",
@@ -181,6 +185,18 @@ public sealed class AuthorizationMatrixTests : IClassFixture<SecurityApiFixture>
             }
 
             return actor is ClaimFlowRoles.Adjudicator or ClaimFlowRoles.Admin
+                ? HttpStatusCode.OK
+                : HttpStatusCode.Forbidden;
+        }
+
+        if (endpoint.Contains("/api/v1/reports/", StringComparison.Ordinal))
+        {
+            if (anonymous)
+            {
+                return HttpStatusCode.Unauthorized;
+            }
+
+            return actor is ClaimFlowRoles.ReportingReader or ClaimFlowRoles.Admin
                 ? HttpStatusCode.OK
                 : HttpStatusCode.Forbidden;
         }

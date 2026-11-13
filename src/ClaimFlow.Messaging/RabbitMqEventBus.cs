@@ -203,6 +203,7 @@ public sealed class RabbitMqEventBus : IClaimEventBus
             Password = _options.Password,
             VirtualHost = _options.VirtualHost,
             DispatchConsumersAsync = true,
+            ConsumerDispatchConcurrency = _options.ConsumerConcurrency,
             AutomaticRecoveryEnabled = true,
             NetworkRecoveryInterval = TimeSpan.FromSeconds(5),
         };

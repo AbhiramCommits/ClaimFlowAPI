@@ -30,4 +30,5 @@ public sealed record RabbitMqOptions(
     string QueueName = "claimflow.adjudication",
     string DeadLetterQueueName = "claimflow.dead-letter",
     int MaxRetries = 3,
-    int RetryBaseDelayMilliseconds = 500);
+    int RetryBaseDelayMilliseconds = 500,
+    int ConsumerConcurrency = 8);
