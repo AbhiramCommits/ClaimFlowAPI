@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ClaimFlow.Shared</RootNamespace>
+    <AssemblyName>ClaimFlow.Shared</AssemblyName>
+  </PropertyGroup>
+
+</Project>
