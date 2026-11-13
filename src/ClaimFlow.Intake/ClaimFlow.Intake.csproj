@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClaimFlow.Data\ClaimFlow.Data.csproj" />
+    <ProjectReference Include="..\ClaimFlow.Messaging\ClaimFlow.Messaging.csproj" />
     <ProjectReference Include="..\ClaimFlow.Shared\ClaimFlow.Shared.csproj" />
   </ItemGroup>
 

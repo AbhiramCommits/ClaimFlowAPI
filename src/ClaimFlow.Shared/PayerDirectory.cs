@@ -7,12 +7,12 @@ public static class PayerDirectory
 {
     private static readonly PayerProfile[] Profiles =
     {
-        new("PAYER-AETNA", "Aetna", 180, 72),
-        new("PAYER-BCBS", "Blue Cross Blue Shield", 365, 68),
-        new("PAYER-CIGNA", "Cigna", 180, 70),
-        new("PAYER-HUMANA", "Humana", 365, 74),
-        new("PAYER-MEDICARE", "Medicare", 365, 80),
-        new("PAYER-UHC", "UnitedHealthcare", 270, 71),
+        new("PAYER-AETNA", "Aetna", 180, 72, 90),
+        new("PAYER-BCBS", "Blue Cross Blue Shield", 365, 68, 100),
+        new("PAYER-CIGNA", "Cigna", 180, 70, 80),
+        new("PAYER-HUMANA", "Humana", 365, 74, 90),
+        new("PAYER-MEDICARE", "Medicare", 365, 80, 80),
+        new("PAYER-UHC", "UnitedHealthcare", 270, 71, 100),
     };
 
     private static readonly Dictionary<string, PayerProfile> ById =

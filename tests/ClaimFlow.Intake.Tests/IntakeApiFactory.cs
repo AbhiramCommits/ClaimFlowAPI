@@ -28,6 +28,7 @@ public class IntakeApiFactory : WebApplicationFactory<Program>
                 ["Database:Provider"] = "Sqlite",
                 ["ConnectionStrings:ClaimFlow"] = $"Data Source={_databasePath};Pooling=False",
                 ["Logging:LogLevel:Default"] = "Warning",
+                ["Outbox:Enabled"] = "false",
             });
         });
     }

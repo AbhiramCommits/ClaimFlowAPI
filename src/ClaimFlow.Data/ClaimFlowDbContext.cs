@@ -127,6 +127,7 @@ public sealed class ClaimFlowDbContext : DbContext
             Name = p.Name,
             FilingLimitDays = p.FilingLimitDays,
             FeeSchedulePercent = p.FeeSchedulePercent,
+            CoveragePercent = p.CoveragePercent,
         }));
     }
 

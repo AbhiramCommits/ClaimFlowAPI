@@ -117,6 +117,8 @@ public sealed class Payer
     public int FilingLimitDays { get; set; }
 
     public int FeeSchedulePercent { get; set; }
+
+    public int CoveragePercent { get; set; }
 }
 
 public sealed class ClaimStatusHistory

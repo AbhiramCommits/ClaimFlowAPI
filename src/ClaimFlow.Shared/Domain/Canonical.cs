@@ -50,4 +50,9 @@ public sealed record NormalizationResult(
     NormalizedCoverage Coverage);
 
 /// <summary>Immutable payer master data shared by intake validation and adjudication.</summary>
-public sealed record PayerProfile(string PayerId, string Name, int FilingLimitDays, int FeeSchedulePercent);
+public sealed record PayerProfile(
+    string PayerId,
+    string Name,
+    int FilingLimitDays,
+    int FeeSchedulePercent,
+    int CoveragePercent);

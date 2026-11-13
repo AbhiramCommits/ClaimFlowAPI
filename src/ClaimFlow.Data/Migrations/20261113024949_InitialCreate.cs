@@ -59,7 +59,8 @@ namespace ClaimFlow.Data.Migrations
                     PayerId = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     FilingLimitDays = table.Column<int>(type: "int", nullable: false),
-                    FeeSchedulePercent = table.Column<int>(type: "int", nullable: false)
+                    FeeSchedulePercent = table.Column<int>(type: "int", nullable: false),
+                    CoveragePercent = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -171,15 +172,15 @@ namespace ClaimFlow.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "Payers",
-                columns: new[] { "PayerId", "FeeSchedulePercent", "FilingLimitDays", "Name" },
+                columns: new[] { "PayerId", "CoveragePercent", "FeeSchedulePercent", "FilingLimitDays", "Name" },
                 values: new object[,]
                 {
-                    { "PAYER-AETNA", 72, 180, "Aetna" },
-                    { "PAYER-BCBS", 68, 365, "Blue Cross Blue Shield" },
-                    { "PAYER-CIGNA", 70, 180, "Cigna" },
-                    { "PAYER-HUMANA", 74, 365, "Humana" },
-                    { "PAYER-MEDICARE", 80, 365, "Medicare" },
-                    { "PAYER-UHC", 71, 270, "UnitedHealthcare" }
+                    { "PAYER-AETNA", 90, 72, 180, "Aetna" },
+                    { "PAYER-BCBS", 100, 68, 365, "Blue Cross Blue Shield" },
+                    { "PAYER-CIGNA", 80, 70, 180, "Cigna" },
+                    { "PAYER-HUMANA", 90, 74, 365, "Humana" },
+                    { "PAYER-MEDICARE", 80, 80, 365, "Medicare" },
+                    { "PAYER-UHC", 100, 71, 270, "UnitedHealthcare" }
                 });
 
             migrationBuilder.CreateIndex(

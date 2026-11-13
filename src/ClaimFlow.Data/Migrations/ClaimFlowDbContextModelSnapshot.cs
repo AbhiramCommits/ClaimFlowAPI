@@ -349,6 +349,9 @@ namespace ClaimFlow.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
+                    b.Property<int>("CoveragePercent")
+                        .HasColumnType("int");
+
                     b.Property<int>("FeeSchedulePercent")
                         .HasColumnType("int");
 
@@ -368,6 +371,7 @@ namespace ClaimFlow.Data.Migrations
                         new
                         {
                             PayerId = "PAYER-AETNA",
+                            CoveragePercent = 90,
                             FeeSchedulePercent = 72,
                             FilingLimitDays = 180,
                             Name = "Aetna"
@@ -375,6 +379,7 @@ namespace ClaimFlow.Data.Migrations
                         new
                         {
                             PayerId = "PAYER-BCBS",
+                            CoveragePercent = 100,
                             FeeSchedulePercent = 68,
                             FilingLimitDays = 365,
                             Name = "Blue Cross Blue Shield"
@@ -382,6 +387,7 @@ namespace ClaimFlow.Data.Migrations
                         new
                         {
                             PayerId = "PAYER-CIGNA",
+                            CoveragePercent = 80,
                             FeeSchedulePercent = 70,
                             FilingLimitDays = 180,
                             Name = "Cigna"
@@ -389,6 +395,7 @@ namespace ClaimFlow.Data.Migrations
                         new
                         {
                             PayerId = "PAYER-HUMANA",
+                            CoveragePercent = 90,
                             FeeSchedulePercent = 74,
                             FilingLimitDays = 365,
                             Name = "Humana"
@@ -396,6 +403,7 @@ namespace ClaimFlow.Data.Migrations
                         new
                         {
                             PayerId = "PAYER-MEDICARE",
+                            CoveragePercent = 80,
                             FeeSchedulePercent = 80,
                             FilingLimitDays = 365,
                             Name = "Medicare"
@@ -403,6 +411,7 @@ namespace ClaimFlow.Data.Migrations
                         new
                         {
                             PayerId = "PAYER-UHC",
+                            CoveragePercent = 100,
                             FeeSchedulePercent = 71,
                             FilingLimitDays = 270,
                             Name = "UnitedHealthcare"

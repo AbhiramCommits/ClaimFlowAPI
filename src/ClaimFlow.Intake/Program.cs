@@ -3,6 +3,7 @@ using ClaimFlow.Data;
 using ClaimFlow.Data.Entities;
 using ClaimFlow.Intake.Infrastructure;
 using ClaimFlow.Intake.Services;
+using ClaimFlow.Messaging;
 using ClaimFlow.Shared;
 using ClaimFlow.Shared.Messaging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -46,6 +47,8 @@ builder.Services.AddDbContext<ClaimFlowDbContext>((serviceProvider, options) =>
 });
 builder.Services.AddScoped<ClaimIngestService>();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddClaimEventBus();
+builder.Services.AddHostedService<OutboxPublisher>();
 
 builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
